@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <style>
+      html, body, #map {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      #panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+      }
+
+      .SvgOverlay {
+            position: relative;
+            width: 500px;
+            height: 500px;           
+        }
+        
+        .SvgOverlay svg {
+            position: absolute;
+            top: -4000px;
+            left: -4000px;
+            width: 8000px;
+            height: 8000px;        
+        }
+        
+        .SvgOverlay path {
+            stroke: Orange;
+            stroke-width: 2px;
+            fill: #0000FF;
+            fill-opacity: .3;
+        }
+    </style>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/d3/2.10.0/d3.v2.min.js"></script>
+
+</head>
+<body>
+<div id="map"></div>
+    <script type="text/javascript">
+
+    var positions = {
+  "Saint-Urbain": {
+    "lng":-73.588882,
+    "lat":45.519549
+  },
+  "Brebeuf": {
+    "lng":-73.573984,
+    "lat":45.527411
+  },
+  "Maisonneuve_1": {
+    "lng":-73.561591,
+    "lat":45.514785
+  },
+  "Maisonneuve_2": {
+    "lng":-73.575078,
+    "lat":45.500544
+  },
+  "Rachel/Papineau": {
+    "lng":-73.569649,
+    "lat":45.530355
+  },
+  "University": {
+    "lng":-73.575117,
+    "lat":45.505742
+  },
+  "CSC": {
+    "lng":-73.607832,
+    "lat":45.514955
+  },
+  "Pont_Jacques-Cartier": {
+    "lng":-73.554576,
+    "lat":45.525601
+  },
+  "PierDup": {
+    "lng":-73.544546,
+    "lat":45.499662
+  },
+  "Saint-Antoine": {
+    "lng":-73.557787,
+    "lat":45.506247
+  },
+  "Viger": {
+    "lng":-73.559086,
+    "lat":45.507138
+  },
+  "Maisonneuve_3": {
+    "lng":-73.585229,
+    "lat":45.490563
+  },
+  "Notre-Dame": {
+    "lng":-73.544038,
+    "lat":45.531402
+  },
+  "Parc": {
+    "lng":-73.581714,
+    "lat":45.513462
+  },
+  "Rachel/H�tel de Ville": {
+    "lng":-73.580251,
+    "lat":45.519577
+  },
+  "Boyer": {
+    "lng":-73.605235,
+    "lat":45.538402
+  },
+  "Ren�-L�vesque": {
+    "lng":-73.55404,
+    "lat":45.516968
+  },
+  "Totem_Laurier": {
+    "lng":-73.588832,
+    "lat":45.527772
+  },
+  "Berri1": {
+    "lng":-73.562845,
+    "lat":45.516126
+  },
+  "Parc U-Zelt Test": {
+    "lng":-73.58221,
+    "lat":45.5137
+  },
+  "Saint-Laurent U-Zelt Test": {
+    "lng":-73.60311,
+    "lat":45.52782
+  }
+};
+
+    /*var positions = {};
+  positions['Berri1'] = {lat: 45.516126, lng: -73.562845};
+positions['Boyer'] = {lat: 45.538402, lng: -73.605235};
+positions['Brebeuf'] = {lat: 45.527411, lng: -73.573984};
+positions['CSC'] = {lat: 45.514955, lng: -73.607832};
+positions['Pont_Jacques-Cartier'] = {lat: 45.525601, lng: -73.554576};
+positions['Maisonneuve_1'] = {lat: 45.514785, lng: -73.561591};
+positions['Maisonneuve_2'] = {lat: 45.500544, lng: -73.575078};
+positions['Maisonneuve_3'] = {lat: 45.490563, lng: -73.585229};
+positions['Parc'] = {lat: 45.513462, lng: -73.581714};
+positions['Parc U-Zelt Test'] = {lat: 45.5137, lng: -73.58221};
+positions['PierDup'] = {lat: 45.499662, lng: -73.544546};
+positions['Notre-Dame'] = {lat: 45.531402, lng: -73.544038};
+positions['Rachel/Hôtel de Ville'] = {lat: 45.519577, lng: -73.580251};
+positions['Rachel/Papineau'] = {lat: 45.530355, lng: -73.569649};
+positions['René-Lévesque'] = {lat: 45.516968, lng: -73.55404};
+positions['Saint-Antoine'] = {lat: 45.506247, lng: -73.557787};
+positions['Saint-Laurent U-Zelt Test'] = {lat: 45.52782, lng: -73.60311};
+positions['Saint-Urbain'] = {lat: 45.519549, lng: -73.588882};
+positions['Totem_Laurier'] = {lat: 45.527772, lng: -73.588832};
+positions['University'] = {lat: 45.505742, lng: -73.575117};
+positions['Viger'] = {lat: 45.507138, lng: -73.559086};*/
+
+  
+        var data;
+        var currentPos =  {lat: 45.516126, lng: -73.562845};
+        var startAddress = "2871 Boulevard Rosemont, Montreal, QC";
+        var endAddress = "Jean-Talon Market, 7070 Avenue Henri Julien, Montréal, QC H2S 3S3";
+
+        var options = {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        };
+
+        function success(pos) {
+          var crd = pos.coords;
+          currentPos = {lat: crd.latitude, lng: crd.longitude};
+
+          console.log('Your current position is:');
+          console.log('Latitude : ' + crd.latitude);
+          console.log('Longitude: ' + crd.longitude);
+          console.log('More or less ' + crd.accuracy + ' meters.');
+
+          //initMap();
+        };
+
+        function error(err) {
+          console.warn('ERROR(' + err.code + '): ' + err.message);
+        };
+
+        navigator.geolocation.getCurrentPosition(success, error, options);
+
+        var map, overlay, geocoder, directionService, directionsDisplay, boundary, accident_count = 0;  
+        function initMap() {
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: currentPos,
+                //center: new google.maps.LatLng(-18.2, 35.1), // Mozambique
+                zoom: 12,
+                //styles:[{"stylers": [{"saturation": -75},{"lightness": 75}]}]           
+                //mapTypeId: google.maps.MapTypeId.SATELLITE
+            });
+
+            map.addListener('bounds_changed', function(e){
+                var bound = map.getBounds();
+                var sw = bound.getSouthWest();
+                var ne = bound.getNorthEast();
+
+                console.log(sw.lat() + ", " + sw.lng());
+                console.log(ne.lat() + ", " + ne.lng());
+            }); 
+
+            boundary = new google.maps.LatLngBounds({lat: 45.530989250453274, lng: -73.62424757690428},
+                {lat: 45.55362228617472, lng: -73.5769548675537});
+        
+            //45.530989250453274, -73.62424757690428
+            //45.55362228617472, -73.5769548675537
+
+            geocoder = new google.maps.Geocoder();            
+
+            /*var bikeLayer = new google.maps.BicyclingLayer();
+            bikeLayer.setMap(map);*/
+
+            $.getJSON("stm_data.json", function(d){
+                showStmData(d);
+            });
+            $.getJSON("bike_racks.json", function(d){
+                //showRacks(d);
+            });
+            $.ajax({
+                url: 'http://localhost:8000/bike_accidents.json',
+                success: function(d){
+                    data = JSON.parse(d);
+                    showAccidentHeatmap();
+                }
+            });
+            $.getJSON("comptage.json", function(d){
+                showComptageHeatmap(d);
+            }); 
+
+            directionService = new google.maps.DirectionsService();
+            directionsDisplay = new google.maps.DirectionsRenderer();
+
+            $.getJSON("reseaucyclable201511.json", function(d){
+                showBikePaths(d);
+            });
+
+            directionsDisplay.setMap(map);
+            //directionsDisplay.setPanel(document.getElementById("directionsPanel"));
+
+            showJourney();
+
+        }
+
+        function getCoordinates(arr){
+            var coordinates = [];
+            for (var i = 0; i < arr.length; i++) {
+                coordinates.push({lat: arr[i][1], lng: arr[i][0]});
+            };
+
+            return coordinates;
+        }
+
+        function showJourney(){          
+            var request = {
+              origin:startAddress,
+              destination:endAddress,
+              travelMode: google.maps.TravelMode.BICYCLING
+              //travelMode: google.maps.TravelMode.DRIVING
+            };
+            directionService.route(request, function(result, status) {
+              if (status == google.maps.DirectionsStatus.OK) {
+                directionsDisplay.setDirections(result);
+                //showSteps(response, markerArray, stepDisplay, map);
+              }
+            });
+        }
+
+        function addPath(path){
+          var poly = new google.maps.Polyline({
+              map: map,
+              geodesic: true,
+              strokeColor: '#2A388F',
+              strokeOpacity: 0.3,
+              strokeWeight: 5
+          });   
+
+          var coordinates = path.geometry.coordinates;
+          var path  = [];
+
+          $.each(coordinates, function(i){
+            if(this != undefined && this.length > 2){
+              var pos = {lat: this[1], lng: this[0]};
+              if(pos.lat && pos.lng && !(isNaN(pos.lat) || isNaN(pos.lng)))
+                path.push(pos);
+            }
+          });
+
+          poly.setPath(path);
+        }
+        function showBikePaths(d){
+          var features = d.features;
+
+          $.each(features, function(i){
+            addPath(this);
+          });
+
+        }
+
+        var accidentHeatmap, comptageHeatmap;
+        function setHeatmap(map, positions){    
+            heatmapData = [];
+            for(var loc in positions){
+                var p = positions[loc];
+                p = {lat: p.lat, lng: p.lng};
+                heatmapData.push({location: new google.maps.LatLng(p.lat, p.lng)});
+            }            
+
+            var heatmap = new google.maps.visualization.HeatmapLayer({
+              data: heatmapData
+            });
+            heatmap.set('radius', 20);
+
+            heatmap.setMap(map);
+
+            return heatmap;
+        }        
+
+        var points = {};
+
+        function showComptageHeatmap(d){    
+            heatmapData = [];
+            for(var row=0; row < d.length; row++){
+                var x = d[row];
+                
+                var temp = [];
+                for(var loc in x){
+                  var count = x[loc];
+                  if(count != null && !isNaN(count))
+                  {
+                    p = positions[loc];
+                    if(p && p.lat && p.lng)
+                        temp.push({location: new google.maps.LatLng(p.lat, p.lng), weight: count * 10000});
+                  }
+                }  
+
+                if(temp != null && temp.length > 0)
+                    heatmapData = heatmapData.concat(temp);
+            }
+
+            if(comptageHeatmap != null){
+                comptageHeatmap.setMap(null);
+            }
+
+            comptageHeatmap = new google.maps.visualization.HeatmapLayer({
+              data: heatmapData
+            });
+            comptageHeatmap.set('radius', 20);
+
+            comptageHeatmap.setMap(map);
+
+          }
+
+        function showAccidentHeatmap(){
+            var d = [];
+            
+            for (var i = 0; i < data.length - 1; i++) {
+                var coordinates = {lat: data[i]["lat"], lng: data[i]["long"]};
+                if(coordinates.lat && coordinates.lng){
+                    if(coordinates.lat == 45.5086699 && coordinates.lng == -73.5539925 )
+                        continue;     
+                    d.push(coordinates);
+
+                    if(boundary.contains(new google.maps.LatLng(coordinates.lat, coordinates.lng)))
+                        accident_count += 1;
+                }
+                //d = d.concat(coordinates);
+
+                var str = JSON.stringify(coordinates);
+                if(points[str]){
+                    var obj = points[str];
+                    obj.count = obj.count + 1;
+                    if(obj.count > max){
+                        maxAccident = obj;
+                    }
+                }else{
+                    points[str] = {c: coordinates, count: 1};
+                }
+            };
+
+            console.log('accident count = ' + accident_count)
+
+            if(accidentHeatmap != null){
+                accidentHeatmap.setMap(null);
+            }
+
+            accidentHeatmap = setHeatmap(map, d);
+
+            changeGradient(accidentHeatmap);
+
+            function printPoint(p){
+                console.log(p.lat() + " , " + p.lng());
+            }
+
+            function createMarker(p){
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: p,
+                    title: p.lat() + " , " + p.lng()
+                  });              
+            }
+
+            var findDuplicates = false;
+            if(findDuplicates){
+            var max = 0;
+            var mypoints = null;
+            for(var i=0; i<d.length; i++){
+                var p1 = new google.maps.LatLng(d[i].lat, d[i].lng);
+                var m = 0;
+                var temp = [p1];
+ 
+                for(var j=0; j<d.length; j++){
+                    if(i == j)
+                        continue;
+                    var p2 = new google.maps.LatLng(d[j].lat, d[j].lng);
+                    var distance = google.maps.geometry.spherical.computeDistanceBetween(p2, p1);
+                    if(distance <= 200){
+                        m++;
+                        temp.push(p2);
+                    }
+                }
+
+                if(m > max){
+                    max = m;
+                    mypoints = temp;
+                }
+            }
+
+            console.log(max);
+            for(var i in mypoints){
+                var p = mypoints[i];
+                printPoint(p);
+                createMarker(p);
+            }
+            
+            }
+
+        }
+
+        function loadall(){
+            for (var i = 0; i < data.features.length - 1; i++) {
+                showPath(data.features[i]);
+            };            
+        }
+
+        function changeGradient(hm) {
+          var gradient = [
+            'rgba(0, 255, 255, 0)',
+            'rgba(0, 255, 255, 1)',
+            'rgba(0, 191, 255, 1)',
+            'rgba(0, 127, 255, 1)',
+            'rgba(0, 63, 255, 1)',
+            'rgba(0, 0, 255, 1)',
+            'rgba(0, 0, 223, 1)',
+            'rgba(0, 0, 191, 1)',
+            'rgba(0, 0, 159, 1)',
+            'rgba(0, 0, 127, 1)',
+            'rgba(63, 0, 91, 1)',
+            'rgba(127, 0, 63, 1)',
+            'rgba(191, 0, 31, 1)',
+            'rgba(255, 0, 0, 1)'
+          ]
+          hm.set('gradient', gradient);
+        }
+
+        function showPath(f){
+            var coordinates = f.geometry.coordinates;
+
+            var pos1 = coordinates[0];
+            var posLast = coordinates[coordinates.length - 1];
+            var start = {lat: pos1[1], lng: pos1[0]};
+            var end = {lat: posLast[1], lng: posLast[0]};
+            var marker = new google.maps.Marker({
+                map: map,
+                position: start,
+                title: 'start'
+              });  
+
+            var marker = new google.maps.Marker({
+                map: map,
+                position: end,
+                title: 'end'
+              });  
+
+            var poly = new google.maps.Polyline({
+                path: getCoordinates(coordinates),
+                map: map,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.5,
+                strokeWeight: 5
+            });    
+            
+            poly.setMap(map);
+        }
+
+        var index = 0;
+        var time = 10000;
+        function load_geo_location(accidents){
+
+                var acc = accidents[index]
+
+                var address = acc["Geocoding address"];
+
+                if(!geo_address_map[address]) {
+                    geocoder.geocode( { 'address': address}, function(results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            geo_address_map[address] = {lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng()};
+                            if(index % 10 == 0)
+                                console.log(index);
+
+                            setHeatmap(accidents);
+
+                            window.setTimeout(function(){
+                                index++;
+                                console.log('working...');
+                                load_geo_location(accidents);
+                            }, time);
+                            
+                        }else{
+                            console.log(index);
+                            console.log(JSON.stringify(geo_address_map));
+                            time += 10000;
+                            window.setTimeout(function(){
+                                load_geo_location(accidents);
+                            }, time);
+                        };
+                    });                    
+                }else{
+                    index++;
+                    load_geo_location(accidents);
+                }
+            
+            if(index == accidents.length - 1){
+                console.log(geo_address_map);
+                console.log(JSON.stringify(geo_address_map));
+            }
+            
+        }
+
+        function showStmData (data) {
+            var image = {
+                url: 'stm_small.png',
+                // This marker is 20 pixels wide by 32 pixels high.
+                size: new google.maps.Size(20, 20),
+                // The origin for this image is (0, 0).
+                //origin: new google.maps.Point(0, 0),
+                // The anchor for this image is the base of the flagpole at (0, 32).
+                //anchor: new google.maps.Point(0, 32)
+              };
+
+            function createStmMarker(stmPos, stationName){
+                var marker = new google.maps.Marker({
+                  position: {lat: stmPos.lat, lng: stmPos.lng},
+                  map: map,
+                  icon: image,
+                  title: stationName + " : " + stmPos.count.toString(),
+                  zIndex: 0
+                });
+            }
+
+            $.each(data, function(station){
+                createStmMarker(this, station);
+            });
+        }
+
+        function showRacks (data) {
+            var image = {
+                url: 'rack.jpg',
+                // This marker is 20 pixels wide by 32 pixels high.
+                size: new google.maps.Size(8, 8),
+                // The origin for this image is (0, 0).
+                //origin: new google.maps.Point(0, 0),
+                // The anchor for this image is the base of the flagpole at (0, 32).
+                //anchor: new google.maps.Point(0, 32)
+              };
+
+            function createRackMarker(rackPos){
+                var marker = new google.maps.Marker({
+                  position: {lat: rackPos["LAT"], lng: rackPos["LONG"]},
+                  map: map,
+                  icon: image,
+                  title: rackPos["INV_ID"] + " : " + rackPos["PARC"],
+                  zIndex: 0
+                });
+            }
+
+            $.each(data, function(rack){
+                createRackMarker(this, rack);
+            });
+        }
+
+    </script> 
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            
+        })
+    </script>
+
+ <script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCzoMIGpaKMxuOu0fOjSMwZ2jq5bGumBTQ&callback=initMap&libraries=geometry,visualization&sensor=true">
+</script>
+</body>
+</html>
