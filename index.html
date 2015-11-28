@@ -225,12 +225,9 @@ positions['Viger'] = {lat: 45.507138, lng: -73.559086};*/
             $.getJSON("bike_racks.json", function(d){
                 //showRacks(d);
             });
-            $.ajax({
-                url: 'http://localhost:8000/bike_accidents.json',
-                success: function(d){
-                    data = JSON.parse(d);
-                    showAccidentHeatmap();
-                }
+            $.getJSON('bike_accidents.json', function (d){
+                data = d;
+                showAccidentHeatmap();
             });
             $.getJSON("comptage.json", function(d){
                 showComptageHeatmap(d);
